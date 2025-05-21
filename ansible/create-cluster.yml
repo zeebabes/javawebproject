@@ -37,6 +37,7 @@
           --node-size={{ instance_type }} \
           --control-plane-size={{ instance_type }} \
           --networking kubenet \
+          --dns=none \
           --name=${KOPS_CLUSTER_NAME} \
           --yes
       args:
