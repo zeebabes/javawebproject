@@ -29,24 +29,23 @@
         name: awscli
         executable: pip3
 
-    - name: Download latest stable version of kubectl
+    - name: Get latest kubectl version
+      shell: curl -s https://dl.k8s.io/release/stable.txt
+      register: kubectl_version
+
+    - name: Download and install kubectl
       become: yes
       shell: |
-        curl -LO "https://dl.k8s.io/release/$(curl -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+        curl -LO https://dl.k8s.io/release/{{ kubectl_version.stdout }}/bin/linux/amd64/kubectl
+        install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
       args:
         chdir: /tmp
-        creates: /tmp/kubectl
-
-    - name: Install kubectl binary
-      become: yes
-      copy:
-        src: /tmp/kubectl
-        dest: /usr/local/bin/kubectl
-        mode: '0755'
+        creates: /usr/local/bin/kubectl
 
     - name: Install Kops
       get_url:
         url: https://github.com/kubernetes/kops/releases/download/v1.28.0/kops-linux-amd64
         dest: /usr/local/bin/kops
         mode: '0755'
+
 ...
