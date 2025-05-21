@@ -33,3 +33,4 @@
         export KOPS_CLUSTER_NAME={{ cluster_name }}
         export KOPS_STATE_STORE={{ state_store }}
         kops validate cluster
+...

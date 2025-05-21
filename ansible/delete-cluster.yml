@@ -12,3 +12,4 @@
         export KOPS_CLUSTER_NAME={{ cluster_name }}
         export KOPS_STATE_STORE={{ state_store }}
         kops delete cluster --name=${KOPS_CLUSTER_NAME} --state=${KOPS_STATE_STORE} --yes
+...
