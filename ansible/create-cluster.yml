@@ -26,8 +26,8 @@
         - { key: "KOPS_CLUSTER_NAME", value: "{{ cluster_name }}" }
         - { key: "KOPS_STATE_STORE",  value: "{{ state_store }}" }
 
-    - name: Source .bashrc to apply environment
-      shell: source ~/.bashrc
+    - name: Source .bashrc using bash
+      shell: bash -c "source ~/.bashrc"
       ignore_errors: yes
 
     - name: Create Kops cluster configuration
