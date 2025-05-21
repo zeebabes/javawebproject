@@ -3,30 +3,51 @@
   hosts: master
   become: yes
   vars:
-    cluster_name: "k8s.example.com"
-    state_store: "s3://k8s-state-store"
+    cluster_name: "k8s.local"
+    state_store: "s3://k8sproject2-s3bucket"
+    zones: "us-east-2a,us-east-2b"
+    instance_type: "t2.medium"
+    node_count: 2
 
   tasks:
-    - name: Create SSH key if not exists
+    - name: Ensure SSH key exists
       shell: |
         test -f ~/.ssh/id_rsa || ssh-keygen -t rsa -f ~/.ssh/id_rsa -q -N ""
       args:
         creates: ~/.ssh/id_rsa
 
-    - name: Export environment variables
-      shell: |
-        echo 'export KOPS_CLUSTER_NAME={{ cluster_name }}' >> ~/.bashrc
-        echo 'export KOPS_STATE_STORE={{ state_store }}' >> ~/.bashrc
-        echo 'export AWS_REGION={{ lookup("env", "AWS_REGION") }}' >> ~/.bashrc
+    - name: Export KOPS environment variables
+      lineinfile:
+        path: ~/.bashrc
+        line: 'export {{ item.key }}={{ item.value }}'
+        create: yes
+        insertafter: EOF
+      loop:
+        - { key: "KOPS_CLUSTER_NAME", value: "{{ cluster_name }}" }
+        - { key: "KOPS_STATE_STORE",  value: "{{ state_store }}" }
 
-    - name: Create Kops cluster config
+    - name: Source .bashrc to apply environment
+      shell: source ~/.bashrc
+      ignore_errors: yes
+
+    - name: Create Kops cluster configuration
       shell: |
         export KOPS_CLUSTER_NAME={{ cluster_name }}
         export KOPS_STATE_STORE={{ state_store }}
-        kops create cluster --zones us-east-2a,us-east-2b --node-count=2 \
-          --node-size=t2.medium --master-size=t2.medium \
-          --name=${KOPS_CLUSTER_NAME} --state=${KOPS_STATE_STORE} \
+        kops create cluster \
+          --cloud=aws \
+          --zones={{ zones }} \
+          --node-count={{ node_count }} \
+          --node-size={{ instance_type }} \
+          --master-size={{ instance_type }} \
+          --name=${KOPS_CLUSTER_NAME} \
           --yes
+      args:
+        creates: /home/ubuntu/.kube/config
+
+    - name: Wait for cluster to initialize
+      pause:
+        seconds: 90
 
     - name: Validate cluster
       shell: |
