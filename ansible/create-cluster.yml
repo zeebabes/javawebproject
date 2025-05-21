@@ -1,0 +1,35 @@
+---
+- name: Create Kubernetes Cluster using Kops
+  hosts: master
+  become: yes
+  vars:
+    cluster_name: "k8s.example.com"
+    state_store: "s3://k8s-state-store"
+
+  tasks:
+    - name: Create SSH key if not exists
+      shell: |
+        test -f ~/.ssh/id_rsa || ssh-keygen -t rsa -f ~/.ssh/id_rsa -q -N ""
+      args:
+        creates: ~/.ssh/id_rsa
+
+    - name: Export environment variables
+      shell: |
+        echo 'export KOPS_CLUSTER_NAME={{ cluster_name }}' >> ~/.bashrc
+        echo 'export KOPS_STATE_STORE={{ state_store }}' >> ~/.bashrc
+        echo 'export AWS_REGION={{ lookup("env", "AWS_REGION") }}' >> ~/.bashrc
+
+    - name: Create Kops cluster config
+      shell: |
+        export KOPS_CLUSTER_NAME={{ cluster_name }}
+        export KOPS_STATE_STORE={{ state_store }}
+        kops create cluster --zones us-east-2a,us-east-2b --node-count=2 \
+          --node-size=t2.medium --master-size=t2.medium \
+          --name=${KOPS_CLUSTER_NAME} --state=${KOPS_STATE_STORE} \
+          --yes
+
+    - name: Validate cluster
+      shell: |
+        export KOPS_CLUSTER_NAME={{ cluster_name }}
+        export KOPS_STATE_STORE={{ state_store }}
+        kops validate cluster

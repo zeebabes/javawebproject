@@ -1,0 +1,14 @@
+---
+- name: Delete Kubernetes Cluster using Kops
+  hosts: master
+  become: yes
+  vars:
+    cluster_name: "k8s.example.com"
+    state_store: "s3://k8s-state-store"
+
+  tasks:
+    - name: Delete cluster
+      shell: |
+        export KOPS_CLUSTER_NAME={{ cluster_name }}
+        export KOPS_STATE_STORE={{ state_store }}
+        kops delete cluster --name=${KOPS_CLUSTER_NAME} --state=${KOPS_STATE_STORE} --yes
