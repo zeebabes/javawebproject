@@ -2,18 +2,22 @@ provider "aws" {
   region = var.region
 }
 
+# VPC
 resource "aws_vpc" "main" {
-  cidr_block = var.vpc_cidr
+  cidr_block           = var.vpc_cidr
   enable_dns_hostnames = true
+
   tags = {
     Name = "k8s-vpc"
   }
 }
 
+# Internet Gateway
 resource "aws_internet_gateway" "igw" {
   vpc_id = aws_vpc.main.id
 }
 
+# Public Subnets (2 AZs)
 resource "aws_subnet" "public" {
   count                   = 2
   vpc_id                  = aws_vpc.main.id
@@ -26,6 +30,7 @@ resource "aws_subnet" "public" {
   }
 }
 
+# Route Table for public subnets
 resource "aws_route_table" "public" {
   vpc_id = aws_vpc.main.id
 }
@@ -42,12 +47,14 @@ resource "aws_route_table_association" "public" {
   route_table_id = aws_route_table.public.id
 }
 
+# Security Group
 resource "aws_security_group" "k8s_sg" {
   name        = "k8s-sg"
   description = "Allow Kubernetes traffic"
   vpc_id      = aws_vpc.main.id
 
   ingress {
+    description = "SSH"
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
@@ -55,6 +62,7 @@ resource "aws_security_group" "k8s_sg" {
   }
 
   ingress {
+    description = "K8s API Server"
     from_port   = 6443
     to_port     = 6443
     protocol    = "tcp"
@@ -62,6 +70,7 @@ resource "aws_security_group" "k8s_sg" {
   }
 
   ingress {
+    description = "Kubelet API"
     from_port   = 10250
     to_port     = 10250
     protocol    = "tcp"
@@ -80,13 +89,15 @@ resource "aws_security_group" "k8s_sg" {
   }
 }
 
+# EC2 Instances (1 master + 2 workers)
 resource "aws_instance" "k8s_nodes" {
-  count         = 3
-  ami           = "ami-060988b0dff2faa7c" # Amazon Linux 2 for us-east-2
-  instance_type = var.instance_type
-  subnet_id     = element(aws_subnet.public[*].id, count.index % 2)
-  key_name      = var.key_name
-  security_groups = [aws_security_group.k8s_sg.name]
+  count                       = 3
+  ami                         = "ami-0c55b159cbfafe1f0" # Amazon Linux 2 for us-east-2
+  instance_type               = var.instance_type
+  key_name                    = var.key_name
+  subnet_id                   = element(aws_subnet.public[*].id, count.index % 2)
+  associate_public_ip_address = true
+  vpc_security_group_ids      = [aws_security_group.k8s_sg.id]
 
   tags = {
     Name = "k8s-node-${count.index + 1}"
