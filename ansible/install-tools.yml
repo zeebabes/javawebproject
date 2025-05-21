@@ -5,7 +5,7 @@
 
   tasks:
     - name: Install unzip, curl, and pip
-      yum:
+      dnf:
         name: "{{ item }}"
         state: present
       loop:
