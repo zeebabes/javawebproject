@@ -2,7 +2,7 @@ pipeline {
   agent any
 
   environment {
-    DOCKER_HUB_USER = 'Docker-Hub-Credentials'
+    DOCKER_HUB_USER = 'docker-hub-cred'
     IMAGE_NAME = 'kemiagbabiaka/java-web-project3'
     KUBECONFIG_CREDENTIAL_ID = 'kubeconfig-secret' // store your kubeconfig here
   }
