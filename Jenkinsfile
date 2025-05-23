@@ -7,7 +7,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'project-3', url: 'https://github.com/zeebabes/project1.git'
+                git branch: 'project-3', url: 'https://github.com/zeebabes/javawebproject.git'
             }
         }
         stage('Build Docker Image') {
