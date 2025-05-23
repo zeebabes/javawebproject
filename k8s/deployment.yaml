@@ -1,31 +1,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: webapp
+  name: java-web-project3
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: webapp
+      app: calculator
   template:
     metadata:
       labels:
-        app: webapp
+        app: calculator
     spec:
       containers:
-      - name: webapp
+      - name: calculator
         image: kemiagbabiaka/java-web-project3:latest
         ports:
         - containerPort: 8080
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: webapp-service
-spec:
-  selector:
-    app: webapp
-  type: LoadBalancer
-  ports:
-  - port: 80
-    targetPort: 8080

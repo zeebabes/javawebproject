@@ -1,34 +1,46 @@
 pipeline {
-    agent any
-    environment {
-        DOCKERHUB_CREDENTIALS = credentials('Docker-Hub-Credentials')
-        IMAGE_NAME = "kemiagbabiaka/java-web-project3"
+  agent any
+
+  environment {
+    DOCKER_HUB_USER = 'Docker-Hub-Credentials'
+    IMAGE_NAME = 'kemiagbabiaka/java-web-project3'
+    KUBECONFIG_CREDENTIAL_ID = 'kubeconfig-secret' // store your kubeconfig here
+  }
+
+  stages {
+    stage('Clone Repo') {
+      steps {
+        git branch: 'project-3', url: 'https://github.com/zeebabes/javawebproject.git'
+      }
     }
-    stages {
-        stage('Checkout') {
-            steps {
-                git branch: 'project-3', url: 'https://github.com/zeebabes/javawebproject.git'
-            }
+
+    stage('Build Docker Image') {
+      steps {
+        script {
+          docker.build("${DOCKER_HUB_USER}/${IMAGE_NAME}:latest")
         }
-        stage('Build Docker Image') {
-            steps {
-                sh 'docker build -t $IMAGE_NAME:latest .'
-            }
-        }
-        stage('Push to DockerHub') {
-            steps {
-                sh "echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin"
-                sh 'docker push $IMAGE_NAME:latest'
-            }
-        }
-        stage('Deploy to Kubernetes') {
-            steps {
-                withCredentials([file(credentialsId: 'kubeconfig-prod', variable: 'KUBECONFIG')]) {
-                    sh 'kubectl apply -f deployment.yaml'
-                }
-            }
-        }
+      }
     }
+
+    stage('Push to DockerHub') {
+      steps {
+        withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+          sh "echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin"
+          sh "docker push ${DOCKER_HUB_USER}/${IMAGE_NAME}:latest"
+        }
+      }
+    }
+
+    stage('Deploy to Kubernetes') {
+      steps {
+        withCredentials([file(credentialsId: "${KUBECONFIG_CREDENTIAL_ID}", variable: 'KUBECONFIG')]) {
+          sh """
+            export KUBECONFIG=$KUBECONFIG
+            kubectl apply -f k8s/deployment.yaml
+            kubectl apply -f k8s/service.yaml
+          """
+        }
+      }
+    }
+  }
 }
- 
- 
