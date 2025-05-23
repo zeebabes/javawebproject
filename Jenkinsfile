@@ -2,9 +2,9 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_HUB_USER = 'dockerhub-creds' // matched the credentialId used in withCredentials
+        DOCKER_HUB_USER = 'dockerhub-creds' // Used in docker build/tag
         IMAGE_NAME = 'kemiagbabiaka/java-web-project3'
-        KUBECONFIG_CREDENTIAL_ID = 'kubeconfig-secret' // store your kubeconfig here
+        KUBECONFIG_CREDENTIAL_ID = 'kubeconfig-prod' // Jenkins secret file ID
     }
 
     stages {
@@ -27,16 +27,7 @@ pipeline {
                 withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                     sh '''
                         echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-                        if [ $? -ne 0 ]; then
-                            echo "Docker login failed"
-                            exit 1
-                        fi
-
                         docker push ${DOCKER_HUB_USER}/${IMAGE_NAME}:latest
-
-                        # Optional debug
-                        # docker images
-                        # docker logout
                     '''
                 }
             }
@@ -55,3 +46,5 @@ pipeline {
         }
     }
 }
+
+
