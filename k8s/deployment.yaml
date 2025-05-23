@@ -14,6 +14,6 @@ spec:
     spec:
       containers:
       - name: calculator
-        image: kemiagbabiaka/java-web-project3:latest
+        image: kemiagbabiaka/kubernetes-clusters:latest
         ports:
         - containerPort: 8080

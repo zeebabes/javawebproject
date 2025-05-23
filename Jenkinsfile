@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         DOCKER_HUB_USER = 'docker-hub-cred' // Used in docker build/tag
-        IMAGE_NAME = 'kemiagbabiaka/java-web-project3'
+        IMAGE_NAME = 'kemiagbabiaka/kubernetes-clusters'
         KUBECONFIG_CREDENTIAL_ID = 'kubeconfig-prod' // Jenkins secret file ID
     }
 
