@@ -14,12 +14,21 @@ pipeline {
             }
         }
 
+        stage('Build Maven WAR') {
+            steps {
+                sh 'mvn clean package -DskipTests'
+            }
+        }
+
+        stage('Rename WAR File') {
+            steps {
+                sh 'mv target/*.war target/ROOT.war'
+            }
+        }
+
         stage('Build Docker Image') {
             steps {
                 script {
-                    // Rename WAR to ROOT.war to serve from /
-                    sh 'mv target/*.war target/ROOT.war'
-                    // Build Docker image
                     docker.build("${DOCKER_HUB_USER}/${IMAGE_NAME}:latest")
                 }
             }
@@ -27,8 +36,7 @@ pipeline {
 
         stage('Push to DockerHub') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'docker-hub-cred',
-                    usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                withCredentials([usernamePassword(credentialsId: 'docker-hub-cred', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                     sh """
                         echo \$DOCKER_PASS | docker login -u \$DOCKER_USER --password-stdin
                         docker push ${DOCKER_HUB_USER}/${IMAGE_NAME}:latest
