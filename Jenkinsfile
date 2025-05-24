@@ -2,9 +2,9 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_HUB_USER = 'docker-hub-cred' // Used in docker build/tag
+        DOCKER_HUB_USER = 'kemiagbabiaka' // Used in docker build/tag
         IMAGE_NAME = 'kemiagbabiaka/kubernetes-clusters'
-        KUBECONFIG_CREDENTIAL_ID = 'kubeconfig-prod' // Jenkins secret file ID
+        KUBECONFIG_CREDENTIAL_ID = 'kubeconfig-secret' // Jenkins secret file ID
     }
 
     stages {
