@@ -14,15 +14,12 @@ pipeline {
             }
         }
 
-        stage('Build Maven WAR') {
+        stage('Build & Rename WAR') {
             steps {
-                sh 'mvn clean package -DskipTests'
-            }
-        }
-
-        stage('Rename WAR File') {
-            steps {
-                sh 'mv target/*.war target/ROOT.war'
+                sh '''
+                  mvn clean package -DskipTests
+                  mv target/*.war target/ROOT.war
+                '''
             }
         }
 
@@ -37,10 +34,10 @@ pipeline {
         stage('Push to DockerHub') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'docker-hub-cred', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    sh """
-                        echo \$DOCKER_PASS | docker login -u \$DOCKER_USER --password-stdin
-                        docker push ${DOCKER_HUB_USER}/${IMAGE_NAME}:latest
-                    """
+                    sh '''
+                      echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
+                      docker push ${DOCKER_HUB_USER}/${IMAGE_NAME}:latest
+                    '''
                 }
             }
         }
@@ -48,15 +45,4 @@ pipeline {
         stage('Deploy to Kubernetes') {
             steps {
                 withCredentials([file(credentialsId: "${KUBECONFIG_CREDENTIAL_ID}", variable: 'KUBECONFIG')]) {
-                    sh """
-                        export KUBECONFIG=\$KUBECONFIG
-                        kubectl apply -f k8s/deployment.yaml
-                        kubectl apply -f k8s/service.yaml
-                    """
-                }
-            }
-        }
-    }
-}
-
-
+                    sh
