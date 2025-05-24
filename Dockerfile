@@ -3,7 +3,7 @@ FROM maven:3.9.4-eclipse-temurin-17 as builder
 WORKDIR /app
 COPY . .
 RUN mvn clean package -DskipTests \
-    && mv target/*.war target/ROOT.war  # <-- rename war to ROOT.war
+    && mv target/*.war target/ROOT.war  # 👈 this ensures the app runs at /
 
 # Stage 2 - Deploy to Tomcat
 FROM tomcat:9.0
