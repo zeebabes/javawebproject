@@ -2,9 +2,9 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_HUB_USER = 'kemiagbabiaka' // Used in docker build/tag
-        IMAGE_NAME = 'kubernetes-clusters'
-        KUBECONFIG_CREDENTIAL_ID = 'kubeconfig-secret' // Jenkins secret file ID
+        DOCKER_HUB_USER = 'docker-hub-cred'
+        IMAGE_NAME = 'kemiagbabiaka/java-web-project3'
+        KUBECONFIG_CREDENTIAL_ID = 'kubeconfig-secret' // store your kubeconfig here
     }
 
     stages {
@@ -17,6 +17,9 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
+                    // Rename WAR to ROOT.war to serve from /
+                    sh 'mv target/*.war target/ROOT.war'
+                    // Build Docker image
                     docker.build("${DOCKER_HUB_USER}/${IMAGE_NAME}:latest")
                 }
             }
@@ -24,11 +27,12 @@ pipeline {
 
         stage('Push to DockerHub') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'docker-hub-cred', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    sh '''
-                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                withCredentials([usernamePassword(credentialsId: 'docker-hub-cred',
+                    usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh """
+                        echo \$DOCKER_PASS | docker login -u \$DOCKER_USER --password-stdin
                         docker push ${DOCKER_HUB_USER}/${IMAGE_NAME}:latest
-                    '''
+                    """
                 }
             }
         }
@@ -36,11 +40,11 @@ pipeline {
         stage('Deploy to Kubernetes') {
             steps {
                 withCredentials([file(credentialsId: "${KUBECONFIG_CREDENTIAL_ID}", variable: 'KUBECONFIG')]) {
-                    sh '''
-                        export KUBECONFIG=$KUBECONFIG
+                    sh """
+                        export KUBECONFIG=\$KUBECONFIG
                         kubectl apply -f k8s/deployment.yaml
                         kubectl apply -f k8s/service.yaml
-                    '''
+                    """
                 }
             }
         }
