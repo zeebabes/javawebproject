@@ -1,19 +1,13 @@
-# Use an official Maven image to build the app
-FROM maven:3.8.6-eclipse-temurin AS build
- 
+# Stage 1 - Build the app
+FROM maven:3.9.4-eclipse-temurin-17 as builder
 WORKDIR /app
- 
-# Copy project files and build
 COPY . .
-RUN mvn clean package -DskipTests
- 
-# Use Tomcat as base image to run the app
+RUN mvn clean package -DskipTests \
+    && mv target/*.war target/ROOT.war
+
+# Stage 2 - Deploy to Tomcat
 FROM tomcat:9.0
- 
-# Remove default web apps and deploy our WAR
-RUN rm -rf /usr/local/tomcat/webapps/*
-COPY --from=build /app/target/*.war /usr/local/tomcat/webapps/ROOT.war
- 
+COPY --from=builder /app/target/ROOT.war /usr/local/tomcat/webapps/
 EXPOSE 8080
 CMD ["catalina.sh", "run"]
 
